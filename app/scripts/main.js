@@ -24,17 +24,21 @@
 
         var cameraManager = new CameraManager('camera');
         var qrCodeManager = new QRCodeManager('qrcode');
+        var processingFrame = false;
 
         cameraManager.onframe = function() {
             // There is a frame in the camera, what should we do with it?
+            if (processingFrame === false) {
+                processingFrame = true;
 
-            var imageData = cameraManager.getImageData();
-            var detectedQRCode = qrCodeManager.detectQRCode(imageData, function(url) {
-                if (url !== undefined) {
-                    qrCodeManager.showDialog(url);
-                }
-            });
-
+                var imageData = cameraManager.getImageData();
+                var detectedQRCode = qrCodeManager.detectQRCode(imageData, function(url) {
+                    if (url !== undefined) {
+                        qrCodeManager.showDialog(url);
+                    }
+                    processingFrame = false;
+                });
+            }
         };
     };
 
@@ -195,6 +199,8 @@
             if (self.onframe) self.onframe();
 
             coordinatesHaveChanged = false;
+
+            requestAnimationFrame(captureFrame);
         };
 
         var getCamera = function(videoSource, cb) {
@@ -232,35 +238,14 @@
 
                     var isSetup = setupVariables(e);
                     if (isSetup) {
-
-                        function updateFrame() {
-                            // ----------- Deugging note ----------- //
-                            /* !!! You Gotta Call This!!! If you send this as a callback into setInterval
-                             * then you shouldn't call !!!
-                             * Like this:
-                             * if (isSetup) {
-                             *   setInterval(captureFrame.bind(self), 4);
-                             * }
-                             * When debugging, remember to send a console.log into the children functions getting called.
-                             */
-                            captureFrame.bind(self)();
-                            requestAnimationFrame(updateFrame);
-                        }
-
-                        updateFrame();
+                        requestAnimationFrame(captureFrame.bind(self));
                     } else {
                         // This is just to get around the fact that the videoWidth is not
                         // available in Firefox until sometime after the data has loaded.
                         setTimeout(function() {
                             setupVariables(e);
-
-                            function updateFrame() {
-                                captureFrame.bind(self)();
-                                requestAnimationFrame(updateFrame);
-                            }
-
-                            updateFrame();
-                        }, 100);
+                            requestAnimationFrame(captureFrame.bind(self));
+                        }, 1000);
                     }
 
                     // The video is ready, and the camerea captured
@@ -365,5 +350,3 @@
         var camera = new QRCodeCamera();
     });
 })();
-
-
