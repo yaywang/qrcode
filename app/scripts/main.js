@@ -28,17 +28,17 @@
 
         cameraManager.onframe = function() {
             // There is a frame in the camera, what should we do with it?
-            //if (processingFrame === false) {
-            //    processingFrame = true;
+            if (processingFrame === false) {
+                processingFrame = true;
 
-            var imageData = cameraManager.getImageData();
-            var detectedQRCode = qrCodeManager.detectQRCode(imageData, function(url) {
-                if (url !== undefined) {
-                    qrCodeManager.showDialog(url);
-                }
-                //        processingFrame = false;
-            });
-            //}
+                var imageData = cameraManager.getImageData();
+                var detectedQRCode = qrCodeManager.detectQRCode(imageData, function(url) {
+                    if (url !== undefined) {
+                        qrCodeManager.showDialog(url);
+                    }
+                    processingFrame = false;
+                });
+            }
         };
     };
 
@@ -54,7 +54,6 @@
         var self = this;
 
         this.currentUrl = undefined;
-
 
         this.detectQRCode = function(imageData, callback) {
             callback = callback || function() {};
