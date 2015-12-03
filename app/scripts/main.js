@@ -49,7 +49,7 @@
         var qrcodeNavigate = root.querySelector(".QRCodeSuccessDialog-navigate");
         var qrcodeIgnore = root.querySelector(".QRCodeSuccessDialog-ignore");
 
-        var client = new QRClient();
+        var worker = new Worker('scripts/jsqrcode/qrworker.js');
 
         var self = this;
 
@@ -58,12 +58,25 @@
         this.detectQRCode = function(imageData, callback) {
             callback = callback || function() {};
 
-            client.decode(imageData, function(result) {
+            worker.postMessage(imageData);
+
+            // There's nothing to catch an error in the callback to onmessage.
+            worker.onmessage = function(e) {
+                var result = e.data;
                 if (result !== undefined) {
                     self.currentUrl = result;
                 }
                 callback(result);
-            });
+            }
+
+            worker.onerror = function(error) {
+                function WorkerException(message) {
+                    this.name = "WorkerException";
+                    this.message = message;
+                };
+                throw new WorkerException('Decoder error');
+                callback(undefined);
+            };
         };
 
         this.showDialog = function(url) {
@@ -86,7 +99,6 @@
             window.location = this.currentUrl;
             this.closeDialog();
         }.bind(this));
-
     };
 
     var CameraManager = function(element) {
@@ -133,6 +145,7 @@
         };
 
         this.getImageData = function() {
+            console.log('Getting imageData', new Date)
             // Only get the image data for what we will send to the detector.
             return canvas.getImageData(overlayCoords.x, overlayCoords.y, overlayCoords.width, overlayCoords.height);
         };
